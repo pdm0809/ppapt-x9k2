@@ -1,6 +1,6 @@
 {
-  "name": "빠름빠름 전용앱",
-  "short_name": "아파트비번",
+  "name": "비번앱",
+  "short_name": "비번앱",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
