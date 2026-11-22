@@ -859,7 +859,7 @@
       try { allData = JSON.parse(localBackup); } catch (e) { allData = []; }
       onDataChanged();
     }
-    const { data, error } = await sb.from('apt_passwords').select('*').order('created_at');
+    const { data, error } = await sb.from('apt_passwords_p').select('*').order('created_at');
     if (error) { showMsg('데이터 로드 실패: ' + error.message); return; }
     const res = (data || []).map(r => ({ id: r.id, name: r.apt_name || '', dong: r.dong_line || '', pw: r.password || '', addr: r.address || '', lat: String(r.lat || ''), lon: String(r.lng || ''), note: r.notes || '' }));
     allData = res;
@@ -2564,7 +2564,7 @@
     }
     const payload = { apt_name: d.name, dong_line: d.dong, password: d.pw, address: d.addr, lat: d.lat, lng: d.lon, notes: d.note };
     const editId = document.getElementById('edit-row').value;
-    const q = editId ? sb.from('apt_passwords').update(payload).eq('id', editId) : sb.from('apt_passwords').insert([payload]);
+    const q = editId ? sb.from('apt_passwords_p').update(payload).eq('id', editId) : sb.from('apt_passwords_p').insert([payload]);
     const { error } = await q;
     if (error) { showMsg('저장 실패: ' + error.message); return; }
     hideInputModal(); loadData(); showMsg('성공적으로 저장되었습니다!');
