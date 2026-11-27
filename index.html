@@ -2458,7 +2458,10 @@
 
   function buildBody(i, manage) {
     const dong = String(i.dong);
-    return `<div class="apt-info"><div class="apt-name">${esc(i.name)}</div><div class="apt-dong">${esc(dong)}</div></div><div class="pw-info"><div class="pw-text ${dong.includes("공통") ? 'common' : ''}">${esc(i.pw)}</div>${manage ? `<button class="delete-btn" onclick="deleteData('${esc(i.id)}', event)">삭제</button>` : ''}</div>`;
+    // 노란색(공통 표시)은 단지 전체 공통('공통'·'전동 공통') 행만 — 동 단위 'N동 공통' 행은 일반 색 (2026-11-27 박동민 지시)
+    const dongN = dong.replace(/\s+/g, '');
+    const commonCls = (dongN === '공통' || dongN === '전동공통') ? 'common' : '';
+    return `<div class="apt-info"><div class="apt-name">${esc(i.name)}</div><div class="apt-dong">${esc(dong)}</div></div><div class="pw-info"><div class="pw-text ${commonCls}">${esc(i.pw)}</div>${manage ? `<button class="delete-btn" onclick="deleteData('${esc(i.id)}', event)">삭제</button>` : ''}</div>`;
   }
 
   function cardHtml(r, manage) {
