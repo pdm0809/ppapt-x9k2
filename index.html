@@ -2098,8 +2098,9 @@
   function renderDestPriority(container) {
     const items = complexItems(destInfo.name);
     if (!items.length) return false;  // 방어: 단지 데이터 없으면 일반 렌더로 폴백
-    // 공통비번 행(동 표기에 '공통' 포함)은 동/호수 핀과 무관하게 항상 최상단 노출 (2026-11-17 박동민 지시)
-    const isCommonRow = i => String(i.dong || '').includes('공통');
+    // 단지 전체 공통비번 행(동 번호 없는 '공통'·'전동 공통')만 동/호수 핀과 무관하게 항상 최상단 노출 (2026-11-17 박동민 지시)
+    // 2026-11-27 범위 정정: 'N동 … 공통' 행은 그 동의 행으로 취급한다 (다른 동의 공통 비번이 목적지보다 위에 뜨던 문제)
+    const isCommonRow = i => { const d = String(i.dong || '').replace(/\s+/g, ''); return d === '공통' || d === '전동공통'; };
     const commonItems = items.filter(isCommonRow);
     const baseItems = commonItems.length ? items.filter(i => !isCommonRow(i)) : items;
     const commonHtml = commonItems.slice().sort((a, b) => cmpDong(a, b)).map(item => cardHtml({ item, d: 0, near: true }, false)).join('');
@@ -2111,6 +2112,12 @@
       const pinned = baseItems.filter(i => {
         const d = String(i.dong || '').replace(/\s+/g, '');
         return d && (d.indexOf(dong) === 0 || dong.indexOf(d) === 0);
+      });
+      // 목적지 동과 같은 동의 공통 행은 그 동 그룹 안에서 맨 위로 (2026-11-27 박동민 지시)
+      pinned.sort((a, b) => {
+        const ac = String(a.dong || '').includes('공통') ? 0 : 1;
+        const bc = String(b.dong || '').includes('공통') ? 0 : 1;
+        return ac - bc;
       });
       // 호수가 있으면 해당 호수 라인만 표시 (204호 → 라인 4 → "202동 3.4")
       if (destInfo.hosu) {
@@ -2125,13 +2132,15 @@
           return lines.includes(line);
         });
         if (linePinned.length) {
-          // 라인 매칭된 것만 표시
-          const rest = baseItems.filter(i => linePinned.indexOf(i) < 0).sort((a, b) => cmpDong(a, b));
-          const pinnedHtml = linePinned.map(item => cardHtml({ item, d: 0, near: true }, false)).join('');
+          // 라인 매칭된 것 + 같은 동의 공통 행(라인 표기 없는 것)을 함께 표시
+          const dongCommon = pinned.filter(i => String(i.dong || '').includes('공통') && linePinned.indexOf(i) < 0);
+          const visiblePinned = dongCommon.concat(linePinned);
+          const rest = baseItems.filter(i => visiblePinned.indexOf(i) < 0).sort((a, b) => cmpDong(a, b));
+          const pinnedHtml = visiblePinned.map(item => cardHtml({ item, d: 0, near: true }, false)).join('');
           const restHtml = rest.map(item => cardHtml({ item, d: 0, near: true }, false)).join('');
           if (!destExpanded) {
             bodyHtml = pinnedHtml +
-              ((linePinned.length > 0 && baseItems.length > linePinned.length)
+              ((visiblePinned.length > 0 && baseItems.length > visiblePinned.length)
                 ? '<button class="dest-expand-btn" onclick="expandDestPriority()">전체 동 펼치기 (' + items.length + '개)</button>' : '');
           } else {
             bodyHtml = pinnedHtml +
@@ -2141,6 +2150,9 @@
         } else {
           // 라인 매칭 실패 시 기존 동작 (호수 포함 여부로 정렬)
           pinned.sort((a, b) => {
+            const ac = String(a.dong || '').includes('공통') ? 0 : 1;
+            const bc = String(b.dong || '').includes('공통') ? 0 : 1;
+            if (ac !== bc) return ac - bc;
             const am = String(a.pw || '').includes(hs) ? 0 : 1;
             const bm = String(b.pw || '').includes(hs) ? 0 : 1;
             return am - bm || cmpDong(a, b);
